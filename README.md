@@ -73,34 +73,34 @@
 
     ```
     Align(
-                  alignment: Alignment.bottomCenter,
-                  child: ClipRRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        width: size.width * 1,
-                        height: size.height * 0.55,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              const Color.fromARGB(255, 126, 145, 134).withOpacity(0.02),
-                              const Color.fromARGB(255, 169, 193, 184).withOpacity(0.02),
-                            ],
-                          ),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.35),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 15,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
+        alignment: Alignment.bottomCenter,
+        child: ClipRRect(
+        child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+            width: size.width * 1,
+            height: size.height * 0.55,
+            decoration: BoxDecoration(
+                gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                    const Color.fromARGB(255, 126, 145, 134).withOpacity(0.02),
+                    const Color.fromARGB(255, 169, 193, 184).withOpacity(0.02),
+                ],
+                ),
+                border: Border.all(
+                color: Colors.white.withOpacity(0.35),
+                width: 1.5,
+                ),
+                boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 15,
+                    offset: const Offset(0, 10),
+                ),
+                ],
+            ),
     ```
 #### Note: This is made responsive to make sure it will always have the width of the entire screen alongside a height that covers 55% of any devices.
 
@@ -108,24 +108,24 @@
 
     ```
     child: Align(
-                          alignment: Alignment.topCenter,
-                          child: Column(
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                height: rectangleHeight * 0.069,
-                                decoration: BoxDecoration(
-                                  color: const Color.fromARGB(255, 34, 60, 42).withOpacity(0.2),
-                                  borderRadius: const BorderRadius.only(
-                                    bottomLeft: Radius.circular(100),
-                                    bottomRight: Radius.circular(100),
-                                  ),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.35),
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
+        alignment: Alignment.topCenter,
+        child: Column(
+        children: [
+            Container(
+            width: double.infinity,
+            height: rectangleHeight * 0.069,
+            decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 34, 60, 42).withOpacity(0.2),
+                borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(100),
+                bottomRight: Radius.circular(100),
+                ),
+                border: Border.all(
+                color: Colors.white.withOpacity(0.35),
+                width: 1.5,
+                ),
+            ),
+            ),
     ```
 #### Note: An important decor piece made to make sure that the main liquid glass container look like it has cat ears, cats being the main animal mascot(s) for Kamca's brand, second being snakes.
 
