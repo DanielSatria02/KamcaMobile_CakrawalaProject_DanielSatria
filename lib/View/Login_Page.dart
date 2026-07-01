@@ -2,10 +2,80 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:kamca_app/Controller/Login_controller.dart';
+import 'package:kamca_app/Model/Login_Model.dart';
+import 'package:kamca_app/View/Home_Page.dart';
 
-class KamcaBackgroundScreen extends StatelessWidget {
+class KamcaBackgroundScreen extends StatefulWidget {
   const KamcaBackgroundScreen({super.key});
-  
+
+  @override
+  State<KamcaBackgroundScreen> createState() => _KamcaBackgroundScreenState();
+}
+
+class _KamcaBackgroundScreenState extends State<KamcaBackgroundScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _passwordFocusNode = FocusNode();
+  final LoginController _loginController = LoginController();
+  final LoginModel _loginModel = const LoginModel();
+
+  bool _isLoading = false;
+  bool _showUsernameError = false;
+  bool _showPasswordError = false;
+  String? _feedbackMessage;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _passwordFocusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitLogin() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _showUsernameError = false;
+      _showPasswordError = false;
+      _feedbackMessage = null;
+      _isLoading = true;
+    });
+
+    final result = await _loginController.login(
+      username: _usernameController.text,
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+      if (!result.isSuccess) {
+        _showUsernameError = result.emptyFields.contains(LoginField.username);
+        _showPasswordError = result.emptyFields.contains(LoginField.password);
+        _feedbackMessage = result.message;
+      } else {
+        _feedbackMessage = 'Welcome ${result.user?.name ?? ''}!';
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => HomePage(
+                userName: result.user?.name ?? 'User',
+                profileImageAsset: result.user?.profileImageAsset,
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  void _focusPasswordField() {
+    FocusScope.of(context).requestFocus(_passwordFocusNode);
+  }
+
   TextDecoration? get contentPadding => null;
 
   Widget socialIcon(String assetPath, {double size = 48}) {
@@ -25,18 +95,19 @@ class KamcaBackgroundScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final rectangleWidth = size.width * 0.8;
-    final rectangleHeight = size.height * 0.5; 
+    final rectangleHeight = size.height * 0.5;
     final inputFontSize = 10.0;
     final buttonFontSize = 10.0;
+    final loginModel = _loginModel;
 
     return Scaffold(
       body: Stack(
         children: [
           // background image fills the screen
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/KamcaKats.png'),
+                image: AssetImage(loginModel.backgroundImageAsset),
                 fit: BoxFit.cover,
               ),
             ),
@@ -66,8 +137,11 @@ class KamcaBackgroundScreen extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(30),
-                        child: Image.asset('assets/KamcaLogo.png',
-                            width: rectangleWidth * 0.5, height: rectangleHeight * 0.5),
+                        child: Image.asset(
+                          loginModel.logoImageAsset,
+                          width: rectangleWidth * 0.5,
+                          height: rectangleHeight * 0.5,
+                        ),
                       ),
                     ),
                   ),
@@ -141,9 +215,12 @@ class KamcaBackgroundScreen extends StatelessWidget {
                                         width: rectangleWidth * 1,
                                         height: 35,
                                         child: TextField(
+                                          controller: _usernameController,
+                                          textInputAction: TextInputAction.next,
+                                          onSubmitted: (_) => _focusPasswordField(),
                                           style: TextStyle(color: const Color.fromARGB(255, 93, 93, 93), fontSize: inputFontSize),
                                           decoration: InputDecoration(
-                                            hintText: 'Username',
+                                            hintText: loginModel.usernameHint,
                                             hintStyle: TextStyle(color: const Color.fromARGB(179, 82, 82, 82), fontSize: inputFontSize),
                                             filled: true,
                                             fillColor: Colors.white.withOpacity(0.7),
@@ -151,6 +228,20 @@ class KamcaBackgroundScreen extends StatelessWidget {
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
                                               borderSide: BorderSide.none,
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                              borderSide: BorderSide(
+                                                color: _showUsernameError ? const Color.fromARGB(255, 246, 183, 179) : Colors.transparent,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                              borderSide: BorderSide(
+                                                color: _showUsernameError ? const Color.fromARGB(255, 234, 179, 175) : Colors.transparent,
+                                                width: 1.5,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -172,10 +263,14 @@ class KamcaBackgroundScreen extends StatelessWidget {
                                         width: rectangleWidth * 1,
                                         height: 35,
                                         child: TextField(
+                                          controller: _passwordController,
+                                          focusNode: _passwordFocusNode,
                                           obscureText: true,
+                                          textInputAction: TextInputAction.done,
+                                          onSubmitted: (_) => _submitLogin(),
                                           style: TextStyle(color: const Color.fromARGB(255, 93, 93, 93), fontSize: inputFontSize),
                                           decoration: InputDecoration(
-                                            hintText: 'Password',
+                                            hintText: loginModel.passwordHint,
                                             hintStyle: TextStyle(color: const Color.fromARGB(179, 88, 88, 88), fontSize: inputFontSize),
                                             filled: true,
                                             fillColor: Colors.white.withOpacity(0.7),
@@ -183,6 +278,20 @@ class KamcaBackgroundScreen extends StatelessWidget {
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
                                               borderSide: BorderSide.none,
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                              borderSide: BorderSide(
+                                                color: _showPasswordError ? const Color.fromARGB(255, 238, 162, 157) : Colors.transparent,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                              borderSide: BorderSide(
+                                                color: _showPasswordError ? const Color.fromARGB(255, 231, 165, 160) : Colors.transparent,
+                                                width: 1.5,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -193,7 +302,7 @@ class KamcaBackgroundScreen extends StatelessWidget {
                                       width: rectangleWidth * 0.85,
                                       height: 25,
                                       child: ElevatedButton(
-                                        onPressed: () {},
+                                        onPressed: _isLoading ? null : _submitLogin,
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color.fromARGB(255, 220, 192, 187),
                                           shape: RoundedRectangleBorder(
@@ -201,19 +310,38 @@ class KamcaBackgroundScreen extends StatelessWidget {
                                           ),
                                           textStyle: TextStyle(fontSize: buttonFontSize, fontWeight: FontWeight.w600),
                                         ),
-                                        child: const Text(
-                                          'Sign In',
-                                          style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-                                        ),
+                                        child: _isLoading
+                                            ? const SizedBox(
+                                                width: 14,
+                                                height: 14,
+                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                              )
+                                            : Text(
+                                                loginModel.signInText,
+                                                style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+                                              ),
                                       ),
                                     ),
                                     const SizedBox(height: 12),
+                                    if (_feedbackMessage != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 8),
+                                        child: Text(
+                                          _feedbackMessage!,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: _feedbackMessage!.contains('Welcome') ? Colors.greenAccent : Colors.redAccent,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
                                     GestureDetector(
                                       onTap: () {
                                         // TODO: handle forgot password tap
                                       },
                                       child: Text(
-                                        'Forgot Password?',
+                                        loginModel.forgotPasswordText,
                                         style: TextStyle(
                                           color: Colors.white,
                                           decoration: TextDecoration.underline,
@@ -258,10 +386,10 @@ class KamcaBackgroundScreen extends StatelessWidget {
                                       spacing: 23,
                                       runSpacing: 12,
                                       children: [
-                                        socialIcon('assets/KamcaApple.png', size: 50),
-                                        socialIcon('assets/KamcaGmail.png', size: 50),
-                                        socialIcon('assets/KamcaInstagram.png', size: 50),
-                                        socialIcon('assets/KamcaWhatsapp.png', size: 50),
+                                        socialIcon(loginModel.socialAssetPaths[0], size: 50),
+                                        socialIcon(loginModel.socialAssetPaths[1], size: 50),
+                                        socialIcon(loginModel.socialAssetPaths[2], size: 50),
+                                        socialIcon(loginModel.socialAssetPaths[3], size: 50),
                                       ],
                                     ),
                                     const SizedBox(height: 18),
@@ -304,7 +432,7 @@ class KamcaBackgroundScreen extends StatelessWidget {
                       alignment: Alignment.bottomCenter,
                       child: Text.rich(
                         TextSpan(
-                          text: 'Need an Account? ',
+                          text: loginModel.accountPromptText,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -312,7 +440,7 @@ class KamcaBackgroundScreen extends StatelessWidget {
                           ),
                           children: [
                             TextSpan(
-                              text: 'Create one here.',
+                              text: loginModel.createAccountText,
                               style: const TextStyle(
                                 color: Color.fromARGB(255, 187, 239, 211),
                                 fontStyle: FontStyle.italic,
