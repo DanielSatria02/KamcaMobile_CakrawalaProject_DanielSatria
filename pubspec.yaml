@@ -68,6 +68,7 @@ flutter:
     - assets/KamcaInstagram.png
     - assets/KamcaWhatsapp.png
     - assets/arianagrande.webp
+    - assets/WardahFaceWash.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

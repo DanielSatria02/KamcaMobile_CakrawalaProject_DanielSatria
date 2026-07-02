@@ -1,2 +1,1 @@
-
-// Maybe we should explore this area later~~
+// Maybe we should explore the area ahead of us later~~

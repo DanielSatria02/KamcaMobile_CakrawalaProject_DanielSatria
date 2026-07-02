@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:kamca_app/Component/Footer.dart';
 import 'package:kamca_app/Component/Header.dart';
+import 'package:kamca_app/Component/Product_card.dart';
+import 'package:kamca_app/Controller/ProductCardAnime_controller.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -21,6 +23,24 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _didPrecache = false;
+  late final ProductCardAnimeController _rightProductCardAnimeController;
+  late final ProductCardAnimeController _leftProductCardAnimeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _rightProductCardAnimeController = ProductCardAnimeController(
+      direction: ProductCarouselDirection.right,
+      viewportFraction: 0.30,
+    );
+    _leftProductCardAnimeController = ProductCardAnimeController(
+      direction: ProductCarouselDirection.left,
+      viewportFraction: 0.30,
+    );
+
+    unawaited(_rightProductCardAnimeController.initialize());
+    unawaited(_leftProductCardAnimeController.initialize());
+  }
 
   @override
   void didChangeDependencies() {
@@ -33,11 +53,19 @@ class _HomePageState extends State<HomePage> {
   Future<void> _precacheHomeAssets() async {
     await precacheImage(const AssetImage('assets/KamcaKats.png'), context);
     await precacheImage(const AssetImage('assets/KamcaLogo.png'), context);
+    await precacheImage(const AssetImage('assets/WardahFaceWash.png'), context);
 
     final profileImageAsset = widget.profileImageAsset;
     if (profileImageAsset != null && profileImageAsset.isNotEmpty) {
       await precacheImage(AssetImage(profileImageAsset), context);
     }
+  }
+
+  @override
+  void dispose() {
+    _rightProductCardAnimeController.dispose();
+    _leftProductCardAnimeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -92,10 +120,10 @@ class _HomePageState extends State<HomePage> {
                         Expanded(
                           child: LayoutBuilder(
                             builder: (context, constraints) {
-                              final panelHeight = constraints.maxHeight * 0.45;
+                              final panelHeight = constraints.maxHeight * 0.465;
 
                               return Padding(
-                                padding: const EdgeInsets.fromLTRB(0, 24, 0, 12),
+                                padding: const EdgeInsets.fromLTRB(0, 10, 0, 12),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.max,
                                   children: [
@@ -109,7 +137,7 @@ class _HomePageState extends State<HomePage> {
                                         gaplessPlayback: true,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 1),
                                     Text(
                                       'Welcome',
                                       style: TextStyle(
@@ -140,22 +168,22 @@ class _HomePageState extends State<HomePage> {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 0),
                                     const _KamcaGlassTitle(),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 8),
                                     ClipRRect(
                                       child: BackdropFilter(
                                         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                                         child: Container(
-                                          width: size.width * 1,
+                                          width: size.width,
                                           height: panelHeight,
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                               colors: [
-                                                const Color.fromARGB(255, 69, 72, 95).withOpacity(0.33),
-                                                const Color.fromARGB(255, 33, 40, 53).withOpacity(0.22),
+                                                const Color.fromARGB(255, 69, 72, 95).withOpacity(0.55),
+                                                const Color.fromARGB(255, 19, 25, 36).withOpacity(0.55),
                                               ],
                                             ),
                                             border: Border.all(
@@ -169,6 +197,30 @@ class _HomePageState extends State<HomePage> {
                                                 offset: const Offset(0, 10),
                                               ),
                                             ],
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                            child: Column(
+                                              children: [
+                                                Expanded(
+                                                  flex: 4,
+                                                  child: ProductCarouselSection(
+                                                    controller: _rightProductCardAnimeController,
+                                                    cardWidth: 68,
+                                                    cardHeight: 92,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Expanded(
+                                                  flex: 6,
+                                                  child: ProductCarouselSection(
+                                                    controller: _leftProductCardAnimeController,
+                                                    cardWidth: 68,
+                                                    cardHeight: 92,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
