@@ -11,7 +11,7 @@ https://www.figma.com/design/5yL2a3dWxneqcc83hESa7X/UAS_DgTg3_Group9?node-id=9-4
   
   ### A screenshot of what that should look like:
 
-  LogInPageSS.png
+  ![Login Page](assets/readme/LogInPageSS.png)
 
 
 </details>
