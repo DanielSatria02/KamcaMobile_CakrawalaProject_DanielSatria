@@ -1,13 +1,21 @@
 
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:kamca_app/Controller/Notification_controller.dart';
 import 'package:kamca_app/Controller/Login_controller.dart';
 import 'package:kamca_app/Model/Login_Model.dart';
+import 'package:kamca_app/Service/user_session.dart';
 import 'package:kamca_app/View/Home_Page.dart';
 
 class KamcaBackgroundScreen extends StatefulWidget {
-  const KamcaBackgroundScreen({super.key});
+  const KamcaBackgroundScreen({
+    super.key,
+    this.notificationController,
+  });
+
+  final AppNotificationController? notificationController;
 
   @override
   State<KamcaBackgroundScreen> createState() => _KamcaBackgroundScreenState();
@@ -19,11 +27,18 @@ class _KamcaBackgroundScreenState extends State<KamcaBackgroundScreen> {
   final FocusNode _passwordFocusNode = FocusNode();
   final LoginController _loginController = LoginController();
   final LoginModel _loginModel = const LoginModel();
+  late final AppNotificationController _notificationController;
 
   bool _isLoading = false;
   bool _showUsernameError = false;
   bool _showPasswordError = false;
   String? _feedbackMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationController = widget.notificationController ?? AppNotificationController.shared;
+  }
 
   @override
   void dispose() {
@@ -50,26 +65,36 @@ class _KamcaBackgroundScreenState extends State<KamcaBackgroundScreen> {
 
     if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-      if (!result.isSuccess) {
+    if (!result.isSuccess) {
+      setState(() {
+        _isLoading = false;
         _showUsernameError = result.emptyFields.contains(LoginField.username);
         _showPasswordError = result.emptyFields.contains(LoginField.password);
         _feedbackMessage = result.message;
-      } else {
-        _feedbackMessage = 'Welcome ${result.user?.name ?? ''}!';
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => HomePage(
-                userName: result.user?.name ?? 'User',
-                profileImageAsset: result.user?.profileImageAsset,
-              ),
-            ),
-          );
-        }
-      }
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = false;
+      _feedbackMessage = 'Welcome ${result.user?.name ?? ''}!';
     });
+
+    await KamcaSessionStore.instance.saveUser(
+      userName: result.user?.name ?? 'User',
+      profileImageAsset: result.user?.profileImageAsset,
+    );
+
+    unawaited(
+      Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => const HomePage(),
+      ),
+      ),
+    );
+
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    await _notificationController.showLoginSuccess();
   }
 
   void _focusPasswordField() {

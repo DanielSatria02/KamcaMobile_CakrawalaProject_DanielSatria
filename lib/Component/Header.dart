@@ -11,6 +11,8 @@ class KamcaHeader extends StatelessWidget {
     this.profileImage,
     this.subtitle = 'Welcome to Kamca',
     this.avatarRadius = 17,
+    this.onArrowTap,
+    this.isPanelOpen = false,
   });
 
   final String userName;
@@ -21,6 +23,8 @@ class KamcaHeader extends StatelessWidget {
   final Widget? profileImage;
   final String subtitle;
   final double avatarRadius;
+  final Future<void> Function()? onArrowTap;
+  final bool isPanelOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -86,21 +90,25 @@ class KamcaHeader extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(top: 41, right: 10, bottom: 20),
-              child: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.35),
-                    width: 1,
+              child: InkWell(
+                onTap: () async => await onArrowTap?.call(),
+                borderRadius: BorderRadius.circular(15),
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.35),
+                      width: 1,
+                    ),
                   ),
-                ),
-                child: Icon(
-                  Icons.keyboard_arrow_left_rounded,
-                  color: textColor,
-                  size: 20,
+                  child: Icon(
+                    isPanelOpen ? Icons.keyboard_arrow_right_rounded : Icons.keyboard_arrow_left_rounded,
+                    color: textColor,
+                    size: 20,
+                  ),
                 ),
               ),
             ),

@@ -1,72 +1,119 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
+import 'package:kamca_app/Controller/Footer_controller.dart';
+import 'package:kamca_app/Model/Footer_Model.dart';
 
 class KamcaFooter extends StatelessWidget {
 	const KamcaFooter({
 		super.key,
-		this.height = 86,
-		this.backgroundColor = const Color.fromARGB(255, 35, 53, 49),
-		this.iconColor = const Color.fromARGB(255, 220, 192, 187),
-		this.labelColor = const Color.fromARGB(255, 220, 192, 187),
-		this.kamcaIconBackgroundColor = const Color.fromARGB(255, 35, 53, 49),
+		required this.controller,
 	});
 
-	final double height;
-	final Color backgroundColor;
-	final Color iconColor;
-	final Color labelColor;
-	final Color kamcaIconBackgroundColor;
+	final FooterController controller;
 
 	@override
 	Widget build(BuildContext context) {
-		return PhysicalShape(
-			color: backgroundColor,
-			elevation: 8,
-			shadowColor: Colors.black.withOpacity(0.28),
-			clipper: const _FooterBiteClipper(),
-			child: Container(
-				height: height,
-				padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-				child: Row(
-					crossAxisAlignment: CrossAxisAlignment.end,
+		final model = controller.model;
+		final style = model.style;
+		final kamAiItem = model.items.firstWhere(
+			(item) => item.isKamAi,
+			orElse: () => const FooterItemModel(
+				icon: Icons.photo_camera_outlined,
+				label: 'Kam AI',
+				action: FooterAction.kamAi,
+				isKamAi: true,
+			),
+		);
+
+		const overlayTopPadding = 16.0;
+
+		return SizedBox(
+			height: style.height + overlayTopPadding,
+			child: Stack(
+				clipBehavior: Clip.none,
+				children: [
+					Positioned(
+						left: 0,
+						right: 0,
+						bottom: 0,
+						child: PhysicalShape(
+							color: style.backgroundColor,
+							elevation: 8,
+							shadowColor: Colors.black.withOpacity(0.28),
+							clipper: const _FooterBiteClipper(),
+							child: Container(
+								height: style.height,
+								padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+								child: Row(
+									crossAxisAlignment: CrossAxisAlignment.end,
+									children: model.items
+											.map(
+												(item) => Expanded(
+													child: item.isKamAi
+															? _KamcaFooterLabelItem(item: item, style: style)
+															: _FooterItem(
+																	item: item,
+																	style: style,
+																	onTap: () async => await controller.onTap(context, item.action),
+																),
+												),
+											)
+											.toList(),
+								),
+							),
+						),
+					),
+					Positioned(
+						top: 3,
+						left: 0,
+						right: 0,
+						child: Center(
+							child: _KamcaFooterIconButton(
+								item: kamAiItem,
+								style: style,
+								onTap: () async => await controller.onTap(context, kamAiItem.action),
+							),
+						),
+					),
+				],
+			),
+		);
+	}
+}
+
+class _FooterItem extends StatelessWidget {
+	const _FooterItem({
+		required this.item,
+		required this.style,
+		required this.onTap,
+	});
+
+	final FooterItemModel item;
+	final FooterStyleModel style;
+	final Future<void> Function() onTap;
+
+	@override
+	Widget build(BuildContext context) {
+		return Material(
+			color: Colors.transparent,
+			child: InkWell(
+				onTap: () async => await onTap(),
+				borderRadius: BorderRadius.circular(10),
+				child: Column(
+					mainAxisAlignment: MainAxisAlignment.end,
+					mainAxisSize: MainAxisSize.min,
 					children: [
-						Expanded(
-							child: _FooterItem(
-								icon: Icons.home_outlined,
-								label: 'Home',
-								iconColor: iconColor,
-								labelColor: labelColor,
-							),
-						),
-						Expanded(
-							child: _FooterItem(
-								icon: Icons.shopping_bag_outlined,
-								label: 'Shop',
-								iconColor: iconColor,
-								labelColor: labelColor,
-							),
-						),
-						Expanded(
-							child: _KamcaFooterItem(
-								iconColor: const Color.fromARGB(255, 220, 192, 187),
-								labelColor: labelColor,
-								circleBackgroundColor: kamcaIconBackgroundColor,
-							),
-						),
-						Expanded(
-							child: _FooterItem(
-								icon: Icons.send_outlined,
-								label: 'Message',
-								iconColor: iconColor,
-								labelColor: labelColor,
-							),
-						),
-						Expanded(
-							child: _FooterItem(
-								icon: Icons.person_outline,
-								label: 'Profile',
-								iconColor: iconColor,
-								labelColor: labelColor,
+						Icon(item.icon, color: style.iconColor, size: 23),
+						const SizedBox(height: 10),
+						Padding(
+							padding: const EdgeInsets.only(bottom: 5),
+							child: Text(
+								item.label,
+								style: TextStyle(
+									color: style.labelColor,
+									fontSize: 11,
+									fontWeight: FontWeight.w500,
+								),
 							),
 						),
 					],
@@ -76,18 +123,14 @@ class KamcaFooter extends StatelessWidget {
 	}
 }
 
-class _FooterItem extends StatelessWidget {
-	const _FooterItem({
-		required this.icon,
-		required this.label,
-		required this.iconColor,
-		required this.labelColor,
+class _KamcaFooterLabelItem extends StatelessWidget {
+	const _KamcaFooterLabelItem({
+		required this.item,
+		required this.style,
 	});
 
-	final IconData icon;
-	final String label;
-	final Color iconColor;
-	final Color labelColor;
+	final FooterItemModel item;
+	final FooterStyleModel style;
 
 	@override
 	Widget build(BuildContext context) {
@@ -95,16 +138,15 @@ class _FooterItem extends StatelessWidget {
 			mainAxisAlignment: MainAxisAlignment.end,
 			mainAxisSize: MainAxisSize.min,
 			children: [
-				Icon(icon, color: iconColor, size: 23),
-				const SizedBox(height: 10),
+				const SizedBox(height: 32),
 				Padding(
 					padding: const EdgeInsets.only(bottom: 5),
 					child: Text(
-						label,
+						item.label,
 						style: TextStyle(
-							color: labelColor,
-							fontSize: 11,
-							fontWeight: FontWeight.w500,
+							color: style.labelColor,
+							fontSize: 10.5,
+							fontWeight: FontWeight.w600,
 						),
 					),
 				),
@@ -113,56 +155,41 @@ class _FooterItem extends StatelessWidget {
 	}
 }
 
-class _KamcaFooterItem extends StatelessWidget {
-	const _KamcaFooterItem({
-		required this.iconColor,
-		required this.labelColor,
-		required this.circleBackgroundColor,
+class _KamcaFooterIconButton extends StatelessWidget {
+	const _KamcaFooterIconButton({
+		required this.item,
+		required this.style,
+		required this.onTap,
 	});
 
-	final Color iconColor;
-	final Color labelColor;
-	final Color circleBackgroundColor;
+	final FooterItemModel item;
+	final FooterStyleModel style;
+	final Future<void> Function() onTap;
 
 	@override
 	Widget build(BuildContext context) {
-		return SizedBox(
-			height: 70,
-			child: Stack(
-				clipBehavior: Clip.none,
-				alignment: Alignment.topCenter,
-				children: [
-					Positioned(
-						top: -21,
-						child: Container(
-							width: 55,
-							height: 55,
-							decoration: BoxDecoration(
-								color: circleBackgroundColor,
-								shape: BoxShape.circle,
-								boxShadow: [
-									BoxShadow(
-										color: Colors.black.withOpacity(0.18),
-										blurRadius: 8,
-										offset: const Offset(0, 3),
-									),
-								],
+		return Material(
+			color: Colors.transparent,
+			shape: const CircleBorder(),
+			child: InkWell(
+				onTap: () async => await onTap(),
+				customBorder: const CircleBorder(),
+				child: Container(
+					width: 55,
+					height: 55,
+					decoration: BoxDecoration(
+						color: style.kamcaIconBackgroundColor,
+						shape: BoxShape.circle,
+						boxShadow: [
+							BoxShadow(
+								color: Colors.black.withOpacity(0.18),
+								blurRadius: 8,
+								offset: const Offset(0, 3),
 							),
-							child: Icon(Icons.photo_camera_outlined, color: iconColor, size: 33),
-						),
+						],
 					),
-					Positioned(
-						bottom: 5,
-						child: Text(
-							'Kam AI',
-							style: TextStyle(
-								color: labelColor,
-								fontSize: 10.5,
-								fontWeight: FontWeight.w600,
-							),
-						),
-					),
-				],
+					child: Icon(item.icon, color: style.iconColor, size: 33),
+				),
 			),
 		);
 	}

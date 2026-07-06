@@ -5,16 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:kamca_app/Component/Footer.dart';
 import 'package:kamca_app/Component/Header.dart';
 import 'package:kamca_app/Component/Product_card.dart';
+import 'package:kamca_app/Controller/Footer_controller.dart';
+import 'package:kamca_app/Controller/Header_controller.dart';
 import 'package:kamca_app/Controller/ProductCardAnime_controller.dart';
+import 'package:kamca_app/Service/user_session.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
-    this.userName = 'User',
+    this.userName,
     this.profileImageAsset,
   });
 
-  final String userName;
+  final String? userName;
   final String? profileImageAsset;
 
   @override
@@ -25,18 +28,29 @@ class _HomePageState extends State<HomePage> {
   bool _didPrecache = false;
   late final ProductCardAnimeController _rightProductCardAnimeController;
   late final ProductCardAnimeController _leftProductCardAnimeController;
+  late final FooterController _footerController;
+  late final HeaderController _headerController;
+  late final String _userName;
+  late final String? _profileImageAsset;
 
   @override
   void initState() {
     super.initState();
+    _userName = widget.userName ?? KamcaSessionStore.instance.userName;
+    _profileImageAsset = widget.profileImageAsset ?? KamcaSessionStore.instance.profileImageAsset;
     _rightProductCardAnimeController = ProductCardAnimeController(
       direction: ProductCarouselDirection.right,
-      viewportFraction: 0.30,
+      viewportFraction: 0.27,
     );
     _leftProductCardAnimeController = ProductCardAnimeController(
       direction: ProductCarouselDirection.left,
       viewportFraction: 0.30,
     );
+    _footerController = FooterController(
+      userName: _userName,
+      profileImageAsset: _profileImageAsset,
+    );
+    _headerController = HeaderController();
 
     unawaited(_rightProductCardAnimeController.initialize());
     unawaited(_leftProductCardAnimeController.initialize());
@@ -55,7 +69,7 @@ class _HomePageState extends State<HomePage> {
     await precacheImage(const AssetImage('assets/KamcaLogo.png'), context);
     await precacheImage(const AssetImage('assets/WardahFaceWash.png'), context);
 
-    final profileImageAsset = widget.profileImageAsset;
+    final profileImageAsset = _profileImageAsset;
     if (profileImageAsset != null && profileImageAsset.isNotEmpty) {
       await precacheImage(AssetImage(profileImageAsset), context);
     }
@@ -71,6 +85,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final panelModel = _headerController.panelModel;
+    final panelWidth = size.width * panelModel.panelWidthFactor;
 
     return Scaffold(
       body: Stack(
@@ -104,11 +120,13 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         KamcaHeader(
-                          userName: widget.userName,
-                          profileImage: widget.profileImageAsset != null
+                          userName: _userName,
+                          isPanelOpen: _headerController.isPanelOpen,
+                          onArrowTap: _handleHeaderArrowTap,
+                          profileImage: _profileImageAsset != null
                               ? ClipOval(
                                   child: Image.asset(
-                                    widget.profileImageAsset!,
+                                    _profileImageAsset!,
                                     width: 32,
                                     height: 32,
                                     fit: BoxFit.cover,
@@ -207,7 +225,7 @@ class _HomePageState extends State<HomePage> {
                                                   child: ProductCarouselSection(
                                                     controller: _rightProductCardAnimeController,
                                                     cardWidth: 68,
-                                                    cardHeight: 92,
+                                                    cardHeight: 100,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
@@ -231,7 +249,7 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-                        const KamcaFooter(),
+                        KamcaFooter(controller: _footerController),
                       ],
                     ),
                   ),
@@ -239,9 +257,108 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: !_headerController.isPanelOpen,
+              child: GestureDetector(
+                onTap: _handleBackdropTap,
+                child: AnimatedContainer(
+                  duration: panelModel.animationDuration,
+                  color: _headerController.isPanelOpen
+                      ? Colors.black.withOpacity(0.18)
+                      : Colors.transparent,
+                ),
+              ),
+            ),
+          ),
+          AnimatedPositioned(
+            duration: panelModel.animationDuration,
+            curve: Curves.easeOutCubic,
+            top: 0,
+            bottom: 0,
+            width: panelWidth,
+            right: _headerController.isPanelOpen ? 0 : -panelWidth,
+            child: SafeArea(
+              left: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(22, 28, 20, 20),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(245, 34, 50, 46),
+                  border: Border(
+                    left: BorderSide(
+                      color: Colors.white.withOpacity(0.26),
+                      width: 1,
+                    ),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 18,
+                      offset: const Offset(-6, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      onTap: _handleLogoutTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              panelModel.logoutText,
+                              style: const TextStyle(
+                                color: Color.fromARGB(255, 244, 224, 207),
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: double.infinity,
+                              height: 0,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Color.fromARGB(255, 244, 224, 207),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleHeaderArrowTap() async {
+    await _headerController.togglePanel();
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  Future<void> _handleBackdropTap() async {
+    await _headerController.closePanel();
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
+  Future<void> _handleLogoutTap() async {
+    await _headerController.logout(context);
   }
 }
 
